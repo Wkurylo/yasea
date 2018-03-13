@@ -1,21 +1,5 @@
 package com.github.faucamp.simplertmp.io;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.SocketException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import android.util.Log;
 
 import com.github.faucamp.simplertmp.RtmpHandler;
@@ -26,15 +10,31 @@ import com.github.faucamp.simplertmp.amf.AmfNumber;
 import com.github.faucamp.simplertmp.amf.AmfObject;
 import com.github.faucamp.simplertmp.amf.AmfString;
 import com.github.faucamp.simplertmp.packets.Abort;
+import com.github.faucamp.simplertmp.packets.Audio;
+import com.github.faucamp.simplertmp.packets.Command;
 import com.github.faucamp.simplertmp.packets.Data;
 import com.github.faucamp.simplertmp.packets.Handshake;
-import com.github.faucamp.simplertmp.packets.Command;
-import com.github.faucamp.simplertmp.packets.Audio;
-import com.github.faucamp.simplertmp.packets.SetPeerBandwidth;
-import com.github.faucamp.simplertmp.packets.Video;
-import com.github.faucamp.simplertmp.packets.UserControl;
 import com.github.faucamp.simplertmp.packets.RtmpPacket;
+import com.github.faucamp.simplertmp.packets.SetPeerBandwidth;
+import com.github.faucamp.simplertmp.packets.UserControl;
+import com.github.faucamp.simplertmp.packets.Video;
 import com.github.faucamp.simplertmp.packets.WindowAckSize;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Main RTMP connection implementation class
@@ -44,7 +44,11 @@ import com.github.faucamp.simplertmp.packets.WindowAckSize;
 public class RtmpConnection implements RtmpPublisher {
 
     private static final String TAG = "RtmpConnection";
-    private static final Pattern rtmpUrlPattern = Pattern.compile("^rtmp://([^/:]+)(:(\\d+))*/([^/]+)(/(.*))*$");
+    //private static final Pattern rtmpUrlPattern = Pattern.compile("^rtmp://([^/:]+)(:(\\d+))*/([^/]+)(/(.*))*$");
+    // TODO: 13/03/2018 CORRECTED Regex Pattern to work with Azure and WoWza
+    private static final Pattern rtmpUrlPattern = Pattern.compile("rtmp://([\\da-z.-]*):([\\d]{4})/([a-zA-Z\\d-]*)/([\\da-z.-]*).+?([a-zA-Z]*)?");
+
+
 
     private RtmpHandler mHandler;
     private int port;
@@ -102,14 +106,29 @@ public class RtmpConnection implements RtmpPublisher {
     public boolean connect(String url) {
         Matcher matcher = rtmpUrlPattern.matcher(url);
         if (matcher.matches()) {
-            tcUrl = url.substring(0, url.lastIndexOf('/'));
+//            tcUrl = url.substring(0, url.lastIndexOf('/'));
             swfUrl = "";
             pageUrl = "";
+//            host = matcher.group(1);
+//            String portStr = matcher.group(3);
+//            port = portStr != null ? Integer.parseInt(portStr) : 1935;
+//            appName = matcher.group(4);
+//            streamName = matcher.group(6);
+
+            // TODO: 13/03/2018 CORRECTED Matcher to work with Azure and WoWza
+            tcUrl = matcher.group(0);
             host = matcher.group(1);
-            String portStr = matcher.group(3);
-            port = portStr != null ? Integer.parseInt(portStr) : 1935;
-            appName = matcher.group(4);
-            streamName = matcher.group(6);
+            // rtmp://([^:]+:) ==
+            String portStr = matcher.group(2);
+            port = portStr != null ? Integer.parseInt(portStr) : 1935;      // 1935
+            if(matcher.group(5).equals("")){
+                appName = matcher.group(3);
+                streamName = matcher.group(4);
+            }else {
+                appName = matcher.group(3) + "/" + matcher.group(4);
+                streamName = matcher.group(5);
+            }
+
         } else {
             mHandler.notifyRtmpIllegalArgumentException(new IllegalArgumentException(
                 "Invalid RTMP URL. Must be in format: rtmp://host[:port]/application/streamName"));
