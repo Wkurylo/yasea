@@ -46,7 +46,7 @@ public class RtmpConnection implements RtmpPublisher {
     private static final String TAG = "RtmpConnection";
     //private static final Pattern rtmpUrlPattern = Pattern.compile("^rtmp://([^/:]+)(:(\\d+))*/([^/]+)(/(.*))*$");
     // TODO: 13/03/2018 CORRECTED Regex Pattern to work with Azure and WoWza
-    private static final Pattern rtmpUrlPattern = Pattern.compile("rtmp://([\\da-z.-]*):([\\d]{4})/([a-zA-Z\\d-]*)/([\\da-z.-]*).+?([a-zA-Z]*)?");
+    private static final Pattern rtmpUrlPattern = Pattern.compile("rtmp://([^/:]+)(:(\\d+))?/(.+)(/([^/]*))");
 
 
 
@@ -106,28 +106,16 @@ public class RtmpConnection implements RtmpPublisher {
     public boolean connect(String url) {
         Matcher matcher = rtmpUrlPattern.matcher(url);
         if (matcher.matches()) {
-//            tcUrl = url.substring(0, url.lastIndexOf('/'));
+            tcUrl = url.substring(0, url.lastIndexOf('/'));
             swfUrl = "";
             pageUrl = "";
-//            host = matcher.group(1);
-//            String portStr = matcher.group(3);
-//            port = portStr != null ? Integer.parseInt(portStr) : 1935;
-//            appName = matcher.group(4);
-//            streamName = matcher.group(6);
-
-            // TODO: 13/03/2018 CORRECTED Matcher to work with Azure and WoWza
-            tcUrl = matcher.group(0);
             host = matcher.group(1);
-            // rtmp://([^:]+:) ==
-            String portStr = matcher.group(2);
-            port = portStr != null ? Integer.parseInt(portStr) : 1935;      // 1935
-            if(matcher.group(5).equals("")){
-                appName = matcher.group(3);
-                streamName = matcher.group(4);
-            }else {
-                appName = matcher.group(3) + "/" + matcher.group(4);
-                streamName = matcher.group(5);
-            }
+            String portStr = matcher.group(3);
+            port = portStr != null ? Integer.parseInt(portStr) : 1935;
+            appName = matcher.group(4);
+            streamName = matcher.group(6);
+
+
 
         } else {
             mHandler.notifyRtmpIllegalArgumentException(new IllegalArgumentException(
