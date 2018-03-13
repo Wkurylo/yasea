@@ -37,6 +37,8 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
     private Button btnSwitchCamera;
     private Button btnRecord;
     private Button btnSwitchEncoder;
+    int test = 1;
+
 
     private SharedPreferences sp;
     private String rtmpUrl = "rtmp://ossrs.net/" + getRandomAlphaString(3) + '/' + getRandomAlphaDigitString(5);
@@ -53,6 +55,7 @@ public class MainActivity extends AppCompatActivity implements RtmpHandler.RtmpL
 
         // response screen rotation event
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR);
+
 
         // restore data.
         sp = getSharedPreferences("Yasea", MODE_PRIVATE);
